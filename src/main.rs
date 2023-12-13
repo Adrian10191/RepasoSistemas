@@ -1,5 +1,6 @@
-use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::io::{Read, Write};
+use rustyline::Editor;
 
 fn handle_client(mut stream: TcpStream) {
     let mut buffer = [0; 512];
@@ -13,8 +14,14 @@ fn main() {
 
     for stream in listener.incoming() {
         match stream {
-            Ok(stream) => {
-                std::thread::spawn(|| {
+            Ok(mut stream) => {
+                let mut rl = Editor::<()>::new();
+                if let Ok(line) = rl.readline("Press Enter to send a message: ") {
+                    println!("Sending message: {}", line);
+                    stream.write(line.as_bytes()).expect("Failed to write to socket");
+                }
+
+                std::thread::spawn(move || {
                     handle_client(stream);
                 });
             }
@@ -24,3 +31,5 @@ fn main() {
         }
     }
 }
+
+
